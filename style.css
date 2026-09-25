@@ -1,0 +1,1180 @@
+/* =====================================================================
+   
+   Upload to OJS as a DEPENDENT FILE of the HTML galley, with the Name
+   field set to exactly "style.css". 
+   ===================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Sans+Canadian+Aboriginal:wght@400;700&display=swap');
+
+/* ---------------------------------------------------------------
+   Branding
+
+   The whole galley is set in Noto Sans. Everything after it in the stack
+   is a fallback for a reader who cannot load the webfont, or for a
+   character the webfont does not carry.
+
+   If Junicode or Charis SIL is ever attached to the galley as a dependent
+   file, add an @font-face for it and put it first in the "BCS Marks" src
+   list - a real webfont beats hoping the reader has one installed.
+   --------------------------------------------------------------- */
+
+@font-face {
+  font-family: 'BCS Marks';
+  font-style: normal;
+  font-weight: 400 700;
+  src: local('Gentium Plus'), local('GentiumPlus'),
+       local('Charis SIL'), local('CharisSIL'),
+       local('Doulos SIL'), local('DoulosSIL'),
+       local('Junicode'),
+       local('Aboriginal Sans'), local('Aboriginal Serif'),
+       local('BC Sans'),
+       local('Segoe UI'), local('Lucida Grande'),
+       local('Arial Unicode MS');
+  unicode-range: U+0250-02AF, U+02B0-02FF, U+0300-036F, U+1AB0-1AFF,
+                 U+1DC0-1DFF, U+A700-A71F, U+A720-A7FF;
+}
+
+:root {
+  --bcs-blue: #0b1e34;      /* masthead navy: rules, borders, solid fills */
+  --bcs-blue-mid: #1B4F8A;  /* headings, note numbers, sidebar headings */
+  --bcs-link: #2C5F9E;      /* hyperlinks */
+  --bcs-ink: #000000;       /* black text on a white page */
+  --bcs-page: #ffffff;
+  --bcs-card: #ffffff;
+  --bcs-rule: #e0e0e0;
+  --bcs-muted: #4a5568;
+  --bcs-hover-bg: #FFFFC5;
+  /* Figure images never get wider than this or taller than most of the
+     screen. The 20rem floor keeps a figure readable on a short
+     (landscape phone) or heavily zoomed viewport. */
+  --bcs-figure-max-width: 900px;
+  --bcs-figure-max-height: max(70vh, 20rem);
+
+  /* One stack for the whole article. */
+  --bcs-sans: 'Noto Sans', 'BCS Marks', 'Noto Sans Canadian Aboriginal',
+              'Gentium Plus', 'Charis SIL', 'Doulos SIL', 'Junicode',
+              'Aboriginal Sans', 'BC Sans', 'Segoe UI', 'Helvetica Neue',
+              Helvetica, Arial, 'Arial Unicode MS', sans-serif;
+  /* kept as an alias so older rules that name it still resolve; the
+     galley has no serif text any more */
+  --bcs-serif: var(--bcs-sans);
+}
+
+/* page and text defaults */
+
+body {
+    font-family: var(--bcs-sans);
+    color: var(--bcs-ink);
+    background-color: var(--bcs-page);
+    padding: 2.5rem 1.25rem;
+    margin: 0;
+}
+
+/* Noto Sans everywhere. Buttons, inputs, tables and <pre> do not inherit
+   the body font on their own, and neither does anything the upstream
+   stylesheet styles without naming a family. .monospace is the one
+   deliberate exception (because code should still look like code) */
+body, input, button, select, textarea, table, th, td, caption,
+figcaption, blockquote, cite, q, code, kbd, samp, pre {
+    font-family: var(--bcs-sans);
+}
+
+.body p {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    margin: 0 0 1em;
+}
+
+div > *:first-child { margin-top: 0em }
+
+div { margin-top: 0.5em }
+
+
+.back, .body { font-family: var(--bcs-serif) }
+
+div.metadata { font-family: var(--bcs-sans) }
+div.centered { text-align: center }
+div.metadata div.cell { vertical-align: top }
+
+div.one-column div.cell.spanning { width: 100% }
+
+div.metadata-group {
+ margin-top: 0.5em;
+ font-size: 75%;
+}
+
+div.metadata-group > p, div.metadata-group > div { margin-top: 0.5em }
+
+div.metadata-area * { margin: 0em }
+
+div.metadata-chunk { margin-left: 1em }
+
+div.branding { display: none }
+
+div.document-title-notes {
+  text-align: center;
+  width: 60%;
+  margin-left: auto;
+  margin-right: auto;
+  }
+
+div.footnote { font-size: 90% }
+
+/* Screen-reader-only text (e.g. "opens in a new tab") */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* rules */
+hr.part-rule {
+   border: thin dotted grey;
+   margin-top: 1em;
+   margin-bottom: 1em;
+   }
+
+hr.section-rule {
+   border: 2px dotted grey;
+   margin-top: 1em;
+   margin-bottom: 1em;
+   }
+
+/* Superior numbers that are cross-references: note callouts in the text,
+   and the author-date citations that point into the reference list. These
+   are the "note numbers" the medium blue was asked for - at superscript
+   size a near-black blue is indistinguishable from the text it sits in. */
+.xref {
+   color: var(--bcs-blue-mid);
+   }
+
+/* The note callout itself, and the return arrow at the end of a note. */
+.fn-callout a,
+.fn-return,
+.endnote > sup,
+.footnote > sup {
+   color: var(--bcs-blue-mid);
+   }
+
+/* generated text (comes from XSLT) */
+.generated { color: var(--bcs-blue); }
+
+.warning, tex-math {
+   font-size: 80%; font-family: var(--bcs-sans) }
+
+.warning {
+   color: #c00000 }
+
+.tex-math { color: #006400 }
+
+.data {
+   color: black;
+   }
+
+.formula {
+   font-family: var(--bcs-sans);
+   font-size: 90% }
+
+/* --------------- Titling levels -------------------- */
+
+h1, h2, h3, h4, h5, h6 {
+  display: block;
+  margin-top: 0em;
+  margin-bottom: 0.5em;
+  font-family: var(--bcs-serif);
+  font-weight: bold;
+  color: var(--bcs-blue-mid);
+  text-align: left;
+  scroll-margin-top: 1rem;
+ }
+
+/* Coloured section label above the title, as on the BC Studies website
+   (bcstudies.ubc.ca issue pages). Colours are the website's own; where the
+   website sets white on a light colour, dark text is used instead so the
+   label passes WCAG AA contrast. */
+.section-tag {
+    display: inline-block;
+    margin: 0 0 0.75em;
+    padding: 0.5em 1em;
+    font-family: var(--bcs-sans);
+    font-size: 0.875rem;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    background-color: #055800;   /* the website's default: green */
+    color: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+.byline-role { font-weight: 400; }
+.section-tag-article,
+.section-tag-introduction,
+.section-tag-editorial             { background-color: #ffb347; color: #1d1d1d; }
+.section-tag-the-front             { background-color: #f48f86; color: #1d1d1d; }
+.section-tag-this-space-here       { background-color: #a01e1e; }
+.section-tag-case-comment          { background-color: #185d8c; }
+.section-tag-research-note         { background-color: #495629; }
+.section-tag-soundwork             { background-color: #f2c400; color: #1d1d1d; }
+.section-tag-photo-essay           { background-color: #87db00; color: #1d1d1d; }
+.section-tag-forum                 { background-color: #643200; }
+.section-tag-reflection            { background-color: #b0c6cf; color: #1d1d1d; }
+.section-tag-book-review,
+.section-tag-exhibition-review,
+.section-tag-film-review           { background-color: #004682; }
+.section-tag-exhibition-film-and-new-media-review
+                                   { background-color: #e6c1c1; color: #1d1d1d; }
+.section-tag-review-essay          { background-color: #6c449c; }
+/* podcasts, bibliography, contributors, prize: the default green above */
+
+/* titling level 1: article/piece title */
+.document-title {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    line-height: 1.25;
+    color: var(--bcs-blue-mid);
+    text-align: left;
+    margin-bottom: 0.35em;
+    font-family: var(--bcs-sans);
+  }
+
+/* subtitle on its own line under the title */
+.document-subtitle {
+    font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+    line-height: 1.3;
+    color: var(--bcs-blue-mid);
+    font-weight: 700;
+    text-align: left;
+    margin: 0 0 1em;
+    font-family: var(--bcs-sans);
+}
+
+/* "BC Studies, no. 226 (Summer 2025): 31-52. DOI: ..." */
+.journal-line {
+    font-size: 1.05rem;
+    margin: 0.75em 0 0;
+    color: var(--bcs-ink);
+}
+.journal-line .journal-name { font-style: italic; }
+.journal-line .doi-link { overflow-wrap: anywhere; }
+/* Rule between the title block and the byline */
+hr.title-rule {
+    border: 0;
+    border-top: 1px solid var(--bcs-blue);
+    height: 0;
+    margin: 0.9em 0 0.9em;
+}
+
+.title-block + .author-list,
+hr.title-rule + .author-list { margin-top: 0; }
+.front { margin-bottom: 2em; border-bottom: 1px solid var(--bcs-rule); padding-bottom: 1.5em; }
+
+/* callout titles appear in a left column (table cell)
+  opposite what they head */
+.callout-title { text-align: right;
+ margin-top: 0.5em;
+ margin-right: 1em;
+ font-size: 140% }
+
+
+div.section, div.back-section {
+ margin-top: 1em; margin-bottom: 0.5em }
+
+/* Boxed material (boxed-text, statements, supplementary material) gets the
+   same card as the sidebar: pale fill, hairline border, navy rule down the
+   left. Figures, tables, formulas and audio opt out further down. */
+div.panel {
+ background-color: #f8fafc;
+ border: 1px solid #e2e8f0;
+ border-left: 4px solid var(--bcs-blue);
+ border-radius: 6px;
+ box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+ padding: 1em 1.25em;
+ margin: 1.5em 0;
+ font-size: 0.95rem;
+ line-height: 1.5;
+}
+div.panel h4.block-title,
+.panel .label {
+ color: var(--bcs-blue-mid);
+ font-family: var(--bcs-sans);
+ font-size: 0.8rem;
+ letter-spacing: 0.05em;
+ text-transform: uppercase;
+ margin: 0 0 0.6em;
+}
+.body div.panel p { font-size: inherit; line-height: inherit; margin: 0.4em 0 0; }
+.body div.panel > p:first-of-type { margin-top: 0; }
+
+/* The book (or film, exhibition...) under review, at the head of a review.
+   The first line is the title, so it gets a little more weight. */
+div.boxed-text.book-info { margin-top: 0; }
+.body div.boxed-text.book-info > p { margin-top: 0.15em; color: var(--bcs-muted); }
+.body div.boxed-text.book-info > p:first-of-type {
+ font-size: 1.1em;
+ font-weight: 700;
+ color: var(--bcs-ink);
+ margin-bottom: 0.35em;
+}
+div.boxed-text.book-info a { overflow-wrap: anywhere; }
+
+/* Tables and display formulas read better unboxed. */
+div.table-wrap.panel,
+div.disp-formula.panel {
+ background: transparent;
+ border: none;
+ border-radius: 0;
+ box-shadow: none;
+ padding: 0;
+ font-size: 100%;
+}
+@media print {
+ div.panel { box-shadow: none; background: transparent; break-inside: avoid; }
+}
+div.blockquote { font-size: 90%;
+ border-left: 4px solid var(--bcs-blue);
+ padding-left: 15px;
+ margin: 1.5em 0;
+ color: black;
+}
+div.caption {
+ margin-top: 0.5em; margin-bottom: 0.5em }
+
+div.speech {
+ margin-left: 1em; margin-right: 1em;
+ margin-top: 0.5em; margin-bottom: 0.5em }
+
+div.verse-group {
+ margin-left: 1em;
+ margin-top: 0.5em; margin-bottom: 0.5em }
+
+div.verse-group div.verse-group {
+ margin-left: 1em;
+ margin-top: 0em; margin-bottom: 0em }
+
+div.note { margin-top: 0em; margin-left: 1em;
+ font-size: 85% }
+
+.ref-label { margin-top: 0em; vertical-align: top }
+
+.ref-content { margin-top: 0em; padding-left: 0.25em; }
+
+div.label { margin-top: 0em; margin-bottom: 0em }
+
+p { margin-top: 0.5em; margin-bottom: 0em }
+
+p.first { margin-top: 0em }
+
+p.verse-line, p.citation { margin-top: 0em; margin-bottom: 0em; margin-left: 2em; text-indent: -2em }
+
+p.address-line { margin-top: 0em; margin-bottom: 0em; margin-left: 2em }
+
+ul, ol { margin-top: 0.5em }
+
+li { margin-top: 0.5em; margin-bottom: 0em }
+li > p { margin-top: 0.2em; margin-bottom: 0em  }
+
+div.def-list { border-spacing: 0.25em }
+
+div.def-list div.cell { vertical-align: top;
+ border-bottom: thin solid black;
+ padding-bottom: 0.5em }
+
+div.def-list div.def-list-head {
+ text-align: left }
+
+/* text decoration */
+.label { font-weight: bold; font-family: var(--bcs-serif); font-size: 80% }
+
+/* code should look like code */
+.monospace, .monospace * {
+   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+   }
+
+.overline{
+   text-decoration: overline;
+   }
+
+/* HEADING: plain; Subheading: italic?  */
+.main-title {
+    text-align: left;
+    font-style: normal;
+    font-size: 1.35rem;
+    margin-top: 1.5em;
+}
+.section-title {
+    text-align: left;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin-top: 1.25em;
+}
+.subsection-title {
+    text-align: left;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.05rem;
+}
+
+/* XSLT shouldn't emit an element-citation when a
+   readable mixed-citation exists, so this should never have anything
+   to hide. Left in place for XML produced by older tool versions. */
+.element-citation {
+    display: none;
+}
+
+.generated-hidden {
+   display: none;
+}
+.metadata-entry {
+   display: none;
+}
+
+/* --------------- Links -------------------- */
+
+a {
+   color: var(--bcs-link);
+}
+
+/* Links inside running prose are underlined. 3:1
+   WCAG requirement when color is the sole distinguishing cue. */
+.body a, .back a, .abstract-section a, .bio a {
+   text-decoration: underline;
+   text-underline-offset: 0.15em;
+}
+
+a:hover {
+    color: black;
+    background-color: var(--bcs-hover-bg);
+    text-decoration: underline;
+}
+
+a:focus-visible {
+    outline: 3px solid var(--bcs-blue);
+    outline-offset: 2px;
+    background-color: var(--bcs-hover-bg);
+}
+
+/* Footnote markers render as superscripts. Padding keeps the click
+   target usable without changing how the number sits on the line. */
+a[href^="#fn"] {
+    position: relative;
+    vertical-align: baseline;
+    top: -0.4em;
+    font-size: 0.7em;
+    line-height: 0;
+    padding: 0 0.25em;
+    text-decoration: none;
+}
+
+/* Masthead logo.
+
+   It sits in the same 1120px band as .journal-layout-wrapper and takes the
+   wrapper's auto side margins, so its left edge lands exactly on the left
+   edge of the article column below it. The logo and the title start on
+   the same vertical line. ".image" is kept as an alias for galleys built
+   before I renamed the div */
+.masthead, .image {
+   display: block;
+   max-width: 1120px;
+   margin: 0 auto 1.5rem;
+   text-align: left;
+}
+
+.logo {
+   display: block;
+   width: 100%;
+   max-width: 320px;
+   height: auto;
+   margin: 0;          /* no auto margins so it stays left */
+}
+
+@media (max-width: 1024px) {
+   .logo { max-width: 260px; }
+}
+
+/* Author list under title */
+.author-list {
+  text-align: left;
+  margin-bottom: 0.5em;
+}
+.authors {
+  font-size: 1.35em;
+  margin: 0;
+  color: var(--bcs-blue);
+  font-family: var(--bcs-serif);
+  text-align: left;
+  line-height: 1.5;
+}
+.authors.editors {
+  font-size: 1rem;
+  color: var(--bcs-muted);
+  margin-top: 0.35em;
+}
+.author-entry {
+  display: block;
+}
+.author-name {
+  white-space: nowrap;
+  font-family: var(--bcs-serif);
+  color: var(--bcs-blue);
+  font-weight: 700;
+}
+.authors.editors .author-name { font-weight: 400; }
+.editor-role { font-style: italic; }
+
+/* ORCID, green icon */
+.orcid-link {
+  font-size: 0.75em;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.orcid-icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.12em;
+  margin-right: 0.2em;
+}
+.orcid-link:hover .orcid-text { text-decoration: underline; }
+
+/* Contributor bios at bottom aligned with the article column */
+.author-bios {
+  max-width: 1120px;
+  margin: 2em auto 0;
+  border-top: 1px solid var(--bcs-rule);
+  padding-top: 1em;
+}
+.author-bios h2 {
+  font-family: var(--bcs-serif);
+  color: var(--bcs-blue-mid);
+  font-size: 1.25rem;
+  margin-bottom: 0.5em;
+  text-align: left;
+}
+.bio {
+  max-width: 750px;
+  margin: 0 0 1.25em;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+.bio .sc { font-weight: 700; }
+
+/* Licence and copyright... last thing on the page */
+.footer {
+  max-width: 1120px;
+  margin: 2em auto 0;
+}
+.licence-block {
+  border-top: 1px solid var(--bcs-rule);
+  padding-top: 1em;
+  font-size: 0.95rem;
+  color: var(--bcs-ink);
+}
+.licence-block p { margin: 0.35em 0; }
+.licence-badge img { display: inline-block; vertical-align: middle; border: 0; }
+.copyright-line { color: var(--bcs-muted); }
+
+/* Abstract */
+.abstract-section {
+  margin: 1.5em 0;
+  font-size: 1em;
+  line-height: 1.6;
+}
+.title-abstract {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: var(--bcs-blue-mid);
+  text-align: left;
+  margin-bottom: 0.5em;
+}
+.abstract-section p {
+  margin-bottom: 0.5em;
+}
+
+/* flat block layout for metadata */
+.metadata.two-column.table,
+.metadata .row,
+.metadata .cell {
+  display: block;
+}
+
+/* --- Split layout --- */
+
+.journal-layout-wrapper {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 40px;
+    align-items: start;
+    margin: 20px auto 0;
+    max-width: 1120px;
+}
+
+/* Right sidebar: how to cite, outline */
+.journal-sidebar {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    /* the sidebar scrolls on its own, so reserve room for its scrollbar
+       and keep a margin past it; otherwise the bar covers the right edge
+       of the cite card and outline links */
+    scrollbar-gutter: stable;
+    border-left: 1px solid var(--bcs-rule);
+    padding-left: 20px;
+    padding-right: 16px;
+    font-family: var(--bcs-sans);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.sidebar-meta-card {
+    background-color: var(--bcs-card);
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* These are level-2 headings so the document keeps a sane heading outline */
+.sidebar-heading {
+    color: var(--bcs-blue-mid);
+    font-size: 1.00rem;
+    letter-spacing: 0.05em;
+    margin: 0 0 8px 0;
+    font-weight: 700;
+}
+
+.sidebar-doi {
+    font-size: 0.85rem;
+    word-break: break-word;
+    margin: 0;
+}
+
+.sidebar-citation-box {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--bcs-muted);
+    background-color: #f8fafc;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 3px solid var(--bcs-blue);
+    /* DOIs and long URLs should not push out of the card. */
+    overflow-wrap: anywhere;
+}
+
+.sidebar-citation-box p {
+    margin: 0;
+}
+
+.sidebar-navigation ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-navigation li {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.nav-link {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--bcs-muted);
+    padding: 6px 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--bcs-blue);
+    background-color: #edf2f7;
+    text-decoration: underline;
+}
+
+/* --- Sidebar actions: PDF, Share, Rights and permissions ---------------
+
+   Share and Rights are <details>/<summary>, so they open and close with no
+   JavaScript. <summary> is styled as a button; the marker triangle is turned
+   off because the row already reads as three buttons.
+   ------------------------------------------------------------------- */
+
+.sidebar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--bcs-rule);
+    border-radius: 6px;
+    background-color: #f8fafc;
+    color: var(--bcs-blue-mid);
+    font-family: var(--bcs-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background-color: var(--bcs-hover-bg);
+    color: var(--bcs-blue);
+    text-decoration: none;
+}
+
+.action-btn:focus-visible {
+    outline: 3px solid var(--bcs-blue-mid);
+    outline-offset: 2px;
+}
+
+.action-icon {
+    flex: none;
+    font-size: 1em;
+    line-height: 1;
+}
+
+/* <summary> draws a disclosure triangle by default, in two different ways
+   depending on the browser. Both are turned off. */
+.action-details > summary { list-style: none; }
+.action-details > summary::-webkit-details-marker { display: none; }
+.action-details > summary::marker { content: ""; }
+
+/* A small caret of our own, which turns when the panel opens. */
+.action-details > summary::after {
+    content: "\25BE";
+    margin-left: auto;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+.action-details[open] > summary::after { content: "\25B4"; }
+
+.action-panel {
+    padding: 12px;
+    margin-top: 6px;
+    border: 1px solid var(--bcs-rule);
+    border-radius: 6px;
+    background-color: var(--bcs-card);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--bcs-ink);
+}
+
+.action-panel p { margin: 0 0 0.6em; }
+.action-panel p:last-child { margin-bottom: 0; }
+
+.action-panel-lead {
+    color: var(--bcs-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* A DOI is long and has nowhere good to break; let it break anywhere
+   rather than push the sidebar open. */
+.share-link { overflow-wrap: anywhere; }
+.share-link-fallback { color: var(--bcs-muted); }
+
+/* The script fills this in. With no script it stays empty and collapses.
+   A grid of equal columns rather than a wrapping row, so the buttons line
+   up the same width whether there are five of them or six (the "Share…"
+   button only appears where the browser has a share sheet). */
+.share-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+.share-actions:empty { display: none; }
+.share-actions .share-btn {
+    box-sizing: border-box;
+    width: 100%;
+    line-height: 1.3;
+    text-align: center;
+}
+
+.share-btn,
+.cite-copy {
+    padding: 5px 10px;
+    border: 1px solid var(--bcs-rule);
+    border-radius: 4px;
+    background-color: #f8fafc;
+    color: var(--bcs-blue-mid);
+    font-family: var(--bcs-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.share-btn:hover,
+.cite-copy:hover {
+    background-color: var(--bcs-hover-bg);
+    color: var(--bcs-blue);
+    text-decoration: none;
+}
+
+.share-btn:focus-visible,
+.cite-copy:focus-visible {
+    outline: 3px solid var(--bcs-blue-mid);
+    outline-offset: 2px;
+}
+
+.rights-badge img { display: inline-block; vertical-align: middle; border: 0; }
+.rights-copyright,
+.rights-issn {
+    color: var(--bcs-muted);
+}
+/* The ISSN lines, one each, then "© BC Studies, 2026", all in the same
+   grey at the same size. The rule above goes on whichever comes first.
+   Prefixed with .action-panel to beat ".action-panel p" on margins. */
+.action-panel .rights-issn,
+.action-panel .rights-copyright {
+    margin: 0.8em 0 0;
+    padding-top: 0.6em;
+    border-top: 1px solid var(--bcs-muted);
+}
+.action-panel .rights-issn + .rights-issn,
+.action-panel .rights-issn + .rights-copyright {
+    margin-top: 0.1em;
+    padding-top: 0;
+    border-top: 0;
+}
+.rights-copyright .journal-name {
+    font-style: italic;
+}
+
+/* --- How to cite: Chicago / MLA / APA ----------------------------------
+
+   The tabs and the copy button are hidden until the script has run and put
+   .js-cite on the widget because neither does anything without it. Until
+   then all three citations are on the page, each under its own label. That
+   is the no-JavaScript view: less tidy but equally usable and nothing is
+   hidden behind a control that cannot be operated.
+   ------------------------------------------------------------------- */
+
+.cite-tabs { display: none; }
+
+.js-cite .cite-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.cite-tab {
+    flex: 1 1 auto;
+    padding: 5px 8px;
+    border: 1px solid var(--bcs-rule);
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--bcs-muted);
+    font-family: var(--bcs-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cite-tab:hover {
+    background-color: #edf2f7;
+    color: var(--bcs-blue-mid);
+}
+
+.cite-tab.is-current {
+    background-color: var(--bcs-blue-mid);
+    border-color: var(--bcs-blue-mid);
+    color: #fff;
+}
+
+.cite-tab:focus-visible {
+    outline: 3px solid var(--bcs-blue-mid);
+    outline-offset: 2px;
+}
+
+.cite-panel + .cite-panel { margin-top: 10px; }
+
+.cite-panel-label {
+    margin: 0 0 4px;
+    color: var(--bcs-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.js-cite .cite-panel-label { display: none; }
+.js-cite .cite-panel { display: none; }
+.js-cite .cite-panel.is-current { display: block; }
+.js-cite .cite-panel + .cite-panel { margin-top: 0; }
+
+.cite-copy-wrap:empty { display: none; }
+.cite-copy-wrap { margin-top: 10px; }
+
+/* Main content column */
+.journal-main-content {
+    max-width: 750px;
+    width: 100%;
+    min-width: 0;
+}
+
+/* --- Works Cited --- */
+
+.ref-list-items {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 0.5em;
+}
+
+/* Hanging indent....? The inline display keeps each entry's
+   mixed-citation block on one flowing line with its return arrow. */
+.ref-entry {
+  margin: 0 0 0.6em 0;
+  padding-left: 2em;
+  text-indent: -2em;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+.ref-entry > p, .ref-entry > div {
+  display: inline;
+  margin: 0;
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 1024px) {
+    .journal-layout-wrapper {
+        grid-template-columns: 1fr;
+    }
+    /* one column: the article first then cite box and outline */
+    .journal-sidebar {
+        position: relative;
+        top: 0;
+        max-height: none;
+        overflow-y: visible;
+        scrollbar-gutter: auto;
+        border-left: none;
+        padding-left: 0;
+        padding-right: 0;
+        border-top: 1px solid var(--bcs-rule);
+        padding-top: 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-link { transition: none; }
+}
+
+/* --- Print --- */
+
+@media print {
+    body {
+        background-color: #fff;
+        color: #000;
+        padding: 0;
+        font-size: 11pt;
+    }
+    .journal-sidebar, .masthead, .image, .floating-back-to-top,
+    .sidebar-actions, .cite-widget { display: none; }
+    /* the headings and note numbers go back to black on paper */
+    h1, h2, h3, h4, h5, h6 { color: #000; }
+    .journal-layout-wrapper {
+        display: block;
+        max-width: none;
+    }
+    .journal-main-content { max-width: none; }
+    a { color: #000; text-decoration: underline; }
+    .document-title, .title-abstract, .author-name, .author-bios h2 { color: #000; }
+    h1, h2, h3, h4, h5, h6 { page-break-after: avoid; }
+    .ref-entry, .bio, div.blockquote { page-break-inside: avoid; }
+}
+
+/* Back to top: a link at the foot of the sidebar outline, plus a floating
+   button for narrow screens where the sidebar is no longer sticky. */
+.sidebar-back-to-top {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--bcs-rule);
+}
+
+.back-to-top-link {
+    font-weight: 600;
+}
+
+.floating-back-to-top {
+    display: none;
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 42px;
+    height: 42px;
+    line-height: 42px;
+    text-align: center;
+    border-radius: 50%;
+    background-color: var(--bcs-blue);
+    color: #fff;
+    font-size: 1.1rem;
+    text-decoration: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    z-index: 50;
+}
+
+.floating-back-to-top:hover,
+.floating-back-to-top:focus {
+    text-decoration: none;
+    color: #fff;
+    opacity: 0.85;
+}
+
+@media (max-width: 1024px) {
+    .floating-back-to-top { display: block; }
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+}
+
+@media print {
+    .floating-back-to-top, .sidebar-back-to-top { display: none; }
+}
+
+
+/* small caps carried over from InDesign */
+.sc, span.sc { font-variant: small-caps; }
+
+/* ---------------------------------------------------------------
+   Indigenous-language words
+   --------------------------------------------------------------- */
+.special-characters,
+span[lang]:not([lang|='en']) {
+    font-family: var(--bcs-sans);
+    font-variant: normal;
+    text-transform: none;
+    font-feature-settings: 'ccmp' 1, 'mark' 1, 'mkmk' 1;
+    /* one word, one line even inside a break-word context */
+    overflow-wrap: normal;
+    hyphens: none;
+    -webkit-hyphens: none;
+}
+
+/* Contexts elsewhere in this sheet that allow mid-word breaking (works
+   cited, the DOI line, the sidebar citation box) must not apply it to
+   these words. */
+.ref-entry .special-characters,
+.journal-line .special-characters,
+.sidebar-citation-box .special-characters {
+    overflow-wrap: normal;
+}
+
+/* small caps carried over from InDesign must never swallow one */
+.sc .special-characters,
+span.sc .special-characters {
+    font-variant: normal;
+}
+
+/* figures and tables */
+.fig img, img.fig {
+    display: block;
+    width: auto;
+    max-width: min(100%, var(--bcs-figure-max-width));
+    max-height: var(--bcs-figure-max-height);
+    height: auto;
+    margin-inline: auto;   /* centre the image in the column */
+}
+.fig, .table-wrap { margin: 1.5em 0; }
+.table-wrap table { border-collapse: collapse; width: 100%; font-size: 0.95em; }
+.table-wrap th, .table-wrap td { border: 1px solid var(--bcs-rule); padding: 0.35em 0.5em; vertical-align: top; text-align: left; }
+.table-wrap th { background: #f4f6f8; }
+
+/* figure: label, image, then caption underneath (the stylesheet moves
+   the caption after the image; JATS puts it first). <figure> carries a 40px side margin by default, so the inline margins
+   are reset here. The caption stays left-aligned: long centred text is
+   harder to read. */
+.fig.panel {
+    display: flex;
+    flex-direction: column;
+    margin-inline: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+    font-size: 100%;
+}
+.fig.panel > img { align-self: center; }
+.fig.panel > .caption { font-size: 0.95em; color: var(--bcs-muted); margin-top: 0.5em; }
+.fig.panel > .caption p { margin: 0; }
+
+/* audio: one box for every clip in the article */
+div.media.audio.panel {
+    border: 1px solid #ccc;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 10px;
+    margin: 1.5em 0;
+    background: var(--bcs-card);
+    font-size: 100%;
+    line-height: 1.5;
+}
+div.media.audio.panel .audio-playlist-current { margin: 0 0 10px; }
+div.media.audio.panel .label { margin: 0; font-weight: 700; }
+div.media.audio.panel .caption { font-size: 0.95em; color: var(--bcs-muted); margin: 0.15em 0 0; }
+div.media.audio.panel .caption p { margin: 0; }
+div.media.audio.panel .caption .section-title { font-size: 1.05em; color: var(--bcs-ink); margin: 0 0 0.2em; }
+div.media.audio.panel audio { display: block; width: 100%; }
+div.media.audio.panel p.media-download { font-size: 0.85em; margin: 0.35em 0 0; }
+
+ol.audio-playlist-tracks {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    font-size: 0.9em;
+}
+li.audio-playlist-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75em;
+    margin: 0;
+    padding: 0.3em 3px;
+    border-bottom: 1px solid #ccc;
+}
+li.audio-playlist-item:last-child { border-bottom: 0; }
+li.audio-playlist-item.is-current { background: #f7f7f7; font-weight: 700; }
+a.audio-playlist-track {
+    flex: 1;
+    display: flex;
+    gap: 0.35em;
+    color: var(--bcs-ink);
+    text-decoration: none;
+}
+a.audio-playlist-track:hover .audio-playlist-title,
+a.audio-playlist-track:focus-visible .audio-playlist-title { text-decoration: underline; }
+.audio-playlist-number { min-width: 1.5em; }
+.audio-playlist-title { flex: 1; }
+.audio-playlist-length { color: var(--bcs-muted); font-variant-numeric: tabular-nums; font-weight: 400; }
+a.audio-playlist-download { font-size: 0.85em; font-weight: 400; white-space: nowrap; }
+
+@media print {
+    div.media.audio.panel audio, div.media.audio.panel p.media-download,
+    a.audio-playlist-download { display: none; }
+}

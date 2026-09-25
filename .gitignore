@@ -1,0 +1,18 @@
+__pycache__/
+venv/
+_to_delete/
+_old-do-not-use/
+_replaced-canlit/
+_backup-20260904-113237/
+CL-Instructions/
+JATS-Publishing-1-2-MathML2-DTD/
+tests/
+projects/
+archive/
+.DS_Store
+.Icon?
+JATS-Publishing-1-4-MathML3-DTD/
+.BCS230-Article-Dolman.html
+.BCS230-Article-Dolman copy.html
+
+
