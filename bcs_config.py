@@ -132,5 +132,6 @@ SECTION_MAP = {
                            {"article-type": "other",             "subject": "BIBLIOGRAPHY OF BRITISH COLUMBIA"},
     "contributors":        {"article-type": "other",             "subject": "CONTRIBUTORS"},
     "bc studies prize":    {"article-type": "other",             "subject": "BC STUDIES PRIZE"},
+    "photo essay": {"article-type": "research-essay", "subject": "PHOTO ESSAY"},
 }
 SECTION_DEFAULT = {"article-type": "other", "subject": "ARTICLE"}
