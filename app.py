@@ -208,7 +208,7 @@ def index():
         </form>
         {f"<p class='error'>{escape(error)}</p>" if error else ""}
       </div>
-      <h2>Article Drafts</h2>
+      <h2>Article Library</h2>
       {issue_dl}
       {search_box}
       {table}
