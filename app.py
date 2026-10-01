@@ -769,7 +769,7 @@ EDITOR_CSS = """
   .ed.ed1 { white-space: nowrap; overflow-x: auto; min-height: 1.2em; padding: 5px 8px; }
   .ed { border: 1px solid #d6dbe3; border-radius: 5px; padding: 8px 10px; min-height: 1.5em; background: #fff; font-size: .95rem; line-height: 1.5; }
   .ed:focus { outline: 2px solid #7f9fd4; }
-  .block { display: grid; grid-template-columns: 150px 1fr 96px; gap: 8px; margin: 7px 0; align-items: start; border-radius: 6px; }
+  .block { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 7px 0; align-items: start; border-radius: 6px; }
   .block select { width: 100%; padding: 6px 4px; border-radius: 5px; border: 1px solid #ccc; font-size: .82rem; }
   .block .bbtns { display: flex; gap: 2px; flex-wrap: wrap; }
   .block .bbtns button { padding: 3px 7px; font-size: .78rem; background: #eef1f6; color: #333; }
@@ -866,8 +866,8 @@ EDITOR_CSS = """
   .doibox .no { background: #eee; color: #444; }
   .doibox code { background: #fff; border: 1px solid #dfe3ea; border-radius: 3px; padding: 0 4px; }
   .noteN { font-weight: 700; color: #1F3864; }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; }
-  .grid4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4px 18px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 18px; }
+  .grid4 { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: 4px 18px; }
   .genout { background: #f6f8fc; border-radius: 6px; padding: 14px 16px; margin-top: 14px; }
   .v-valid { color: #1a7f37; font-weight: 700; } .v-invalid { color: #b00020; font-weight: 700; } .v-skipped { color: #9a6700; font-weight: 700; }
   .prev h2.t { font-size: 1.4rem; margin-bottom: 2px; }
