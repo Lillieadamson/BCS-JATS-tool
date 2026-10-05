@@ -85,9 +85,46 @@ def split_authors(author_text):
     return people
 
 
+# Degrees printed after a name in a byline ("prepared by David Gill, mlis").
+# Matched only as a whole comma-separated chunk, so a surname is never taken
+# for one.
+DEGREES = {"mlis", "mls", "mas", "phd", "ma", "msc", "med", "edd", "ba", "bsc",
+           "bed", "mba", "mfa", "llb", "llm", "jd", "md", "dphil", "rn", "mpp"}
+
+_ROLE_PREFIX = re.compile(r"^\s*(prepared|compiled)\s+by\s+", re.I)
+
+
+def byline_parts(byline):
+    """A byline -> (role, names, degrees).
+
+    "prepared by David Gill, mlis" -> ("Prepared by", "David Gill", ["MLIS"]).
+    An ordinary byline comes back as ("", byline, [])."""
+    text = " ".join((byline or "").split())
+    role = ""
+    m = _ROLE_PREFIX.match(text)
+    if m:
+        role = m.group(1).capitalize() + " by"
+        text = text[m.end():]
+    degrees = []
+    while True:
+        m = re.search(r",\s*([A-Za-z.]{2,6})\s*$", text)
+        if not m or m.group(1).replace(".", "").lower() not in DEGREES:
+            break
+        degrees.insert(0, m.group(1).replace(".", "").upper()
+                       .replace("PHD", "PhD").replace("MSC", "MSc")
+                       .replace("MED", "MEd").replace("EDD", "EdD")
+                       .replace("BSC", "BSc").replace("BED", "BEd")
+                       .replace("DPHIL", "DPhil"))
+        text = text[:m.start()].rstrip()
+    return role, text, degrees
+
+
 def split_byline(byline):
     """An article byline, which is always printed given-name-first, and often
-    carries a footnote dagger or an asterisk that InDesign put there."""
+    carries a footnote dagger or an asterisk that InDesign put there. A
+    "Prepared by" in front and degrees behind ("David Gill, MLIS") are not
+    names and are left out; byline_parts() returns them."""
+    byline = byline_parts(byline)[1]
     text = re.sub(r"[\*†‡]+", "", byline or "")
     text = re.sub(r"\s*\([^)]*\)", "", text)
     parts = re.split(r",\s*and\s+|\s+and\s+|\s*&\s*|,\s*", text)

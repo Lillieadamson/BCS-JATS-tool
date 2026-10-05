@@ -854,7 +854,7 @@ EDITOR_CSS = """
   .citrow select { width: 100%; padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-size: .82rem; }
   .badge { font-size: .72rem; border-radius: 10px; padding: 2px 9px; }
   .b-auto { background: #fff3c4; } .b-confirmed { background: #d3f0d3; } .b-none { background: #ffd9d9; }
-  .refrow { display: grid; grid-template-columns: 60px 1fr 92px; gap: 8px; margin: 6px 0; align-items: start; }
+  .refrow { display: grid; grid-template-columns: 60px 1fr 122px; gap: 8px; margin: 6px 0; align-items: start; }
   .refrow .rid { font-size: .72rem; color: #888; padding-top: 10px; }
   .refrow .rid .hasdoi { color: #2e7d32; font-weight: 700; }
   .doibox { margin: -2px 0 12px 68px; border-left: 3px solid #9ecf9e; background: #f3f8f3; border-radius: 0 6px 6px 0; padding: 8px 12px; font-size: .84rem; }
@@ -1924,24 +1924,55 @@ function nextRefId(){
 }
 function refPlain(r){ const d = document.createElement('div'); d.innerHTML = r.html; return d.textContent.trim(); }
 
+// The Bibliography of British Columbia's usual section heads, offered as
+// suggestions for a list title (twin of bcs_bibliography.STANDARD_HEADS).
+const BIB_HEADS = ['Books and Chapters in Books', 'Journal Articles',
+  'Theses, Dissertations, and Graduate Projects', 'Audiovisual Materials',
+  'Grey Literature'];
+function newListTitle(){
+  if (!P.bibliography) return 'Works Cited';
+  const used = P.ref_groups.map(g => g.title);
+  return BIB_HEADS.find(h => !used.includes(h)) || 'New section';
+}
+
 function renderRefs(){
   const c = $('#refgroups'); c.innerHTML = '';
+  if (P.bibliography) {
+    const dl = document.createElement('datalist'); dl.id = 'bib-heads';
+    dl.innerHTML = BIB_HEADS.map(h => `<option value="${escAttr(h)}">`).join('');
+    c.appendChild(dl);
+    const tip = document.createElement('p'); tip.className = 'hint';
+    tip.innerHTML = 'Bibliography of British Columbia: each list below is one section of the ' +
+      'Bibliography, under its own head. Start a new section at an entry with ' +
+      '<b>&#9986;</b> (split list here); join a section to the one above with ' +
+      '<b>merge into list above</b>. Set author names in small caps and titles in ' +
+      'italics or quotation marks, as in print &mdash; that is how the tool reads each entry.';
+    c.appendChild(tip);
+  }
   P.ref_groups.forEach((g, gi) => {
     const card = document.createElement('div'); card.className = 'card';
-    card.innerHTML = `<label>List title</label><input type="text" value="${escAttr(g.title)}">
+    card.innerHTML = `<label>${P.bibliography ? 'Section head' : 'List title'}</label><input type="text" value="${escAttr(g.title)}"${P.bibliography ? ' list="bib-heads"' : ''}>
       <div class="refs" style="margin-top:10px"></div>
       <button class="small ghost">+ add reference</button>
+      ${gi > 0 ? '<button class="small ghost merge-up">merge into list above</button>' : ''}
       <button class="small danger" style="float:right">delete list</button>`;
     card.querySelector('input').addEventListener('input', e => { g.title = e.target.value; markDirty(); });
     const refsDiv = card.querySelector('.refs');
     g.refs.forEach((r, ri) => {
       const row = document.createElement('div'); row.className = 'refrow';
       row.innerHTML = `<div class="rid">${r.id}${refHasDoi(r) ? ' <span class="hasdoi" title="this entry already carries a DOI">DOI</span>' : ''}</div><div class="ed" contenteditable="true"></div>
-        <div class="bbtns"><button>&uarr;</button><button>&darr;</button><button>&#10005;</button></div>`;
+        <div class="bbtns"><button>&uarr;</button><button>&darr;</button><button>&#10005;</button><button title="Split list here: this entry and the ones after it start a new list"${ri === 0 ? ' disabled' : ''}>&#9986;</button></div>`;
       const ed = row.querySelector('.ed');
       ed.innerHTML = r.html || '';
       ed.addEventListener('input', () => { r.html = ed.innerHTML; delete doiSug[r.id]; markDirty(); });
-      const [up, down, del] = row.querySelectorAll('.bbtns button');
+      const [up, down, del, split] = row.querySelectorAll('.bbtns button');
+      split.onclick = () => {
+        if (ri === 0) return;
+        const title = prompt('Title of the new list starting at this entry:', newListTitle());
+        if (title === null) return;
+        P.ref_groups.splice(gi + 1, 0, {title: title.trim() || newListTitle(), refs: g.refs.splice(ri)});
+        markDirty(); renderRefs();
+      };
       up.onclick = () => { if (ri>0){ [g.refs[ri-1], g.refs[ri]] = [g.refs[ri], g.refs[ri-1]]; markDirty(); renderRefs(); } };
       down.onclick = () => { if (ri<g.refs.length-1){ [g.refs[ri+1], g.refs[ri]] = [g.refs[ri], g.refs[ri+1]]; markDirty(); renderRefs(); } };
       del.onclick = () => { if (confirm('Delete this reference? In-text citations pointing to it will unlink.')){ g.refs.splice(ri,1); markDirty(); renderRefs(); } };
@@ -1950,13 +1981,20 @@ function renderRefs(){
       if (box) refsDiv.appendChild(box);
     });
     card.querySelector('button.ghost').onclick = () => { g.refs.push({id: nextRefId(), html: ''}); markDirty(); renderRefs(); };
+    const mergeUp = card.querySelector('button.merge-up');
+    if (mergeUp) mergeUp.onclick = () => {
+      P.ref_groups[gi - 1].refs.push(...g.refs);
+      P.ref_groups.splice(gi, 1);
+      markDirty(); renderRefs();
+    };
     card.querySelector('button.danger').onclick = () => {
       if (confirm('Delete this whole reference list?')) { P.ref_groups.splice(gi,1); markDirty(); renderRefs(); }
     };
     c.appendChild(card);
   });
-  const btn = document.createElement('button'); btn.className = 'ghost'; btn.textContent = '+ Add a reference list (e.g. Works Cited)';
-  btn.onclick = () => { P.ref_groups.push({title: 'Works Cited', refs: []}); markDirty(); renderRefs(); };
+  const btn = document.createElement('button'); btn.className = 'ghost';
+  btn.textContent = P.bibliography ? '+ Add a Bibliography section' : '+ Add a reference list (e.g. Works Cited)';
+  btn.onclick = () => { P.ref_groups.push({title: newListTitle(), refs: []}); markDirty(); renderRefs(); };
   c.appendChild(btn);
 }
 
@@ -2554,10 +2592,20 @@ function wireCiteTips(){
 // until a box is edited, so an untouched draft renders exactly as before.
 let bioBoxes = null;
 const BIO_NAME_SUFFIXES = ['jr', 'sr', 'ii', 'iii', 'iv', 'v'];
+// twin of bcs_names.DEGREES
+const BYLINE_DEGREES = ['mlis', 'mls', 'mas', 'phd', 'ma', 'msc', 'med', 'edd', 'ba', 'bsc',
+  'bed', 'mba', 'mfa', 'llb', 'llm', 'jd', 'md', 'dphil', 'rn', 'mpp'];
 
 // JS twin of bcs_names.split_byline -> [[surname, given], ...]
 function splitByline(byline){
   let text = String(byline || '').split(/\s+/).filter(Boolean).join(' ');
+  // "Prepared by ... , MLIS" (the Bibliography's byline): not names
+  text = text.replace(/^\s*(prepared|compiled)\s+by\s+/i, '');
+  for (;;) {
+    const m = /,\s*([A-Za-z.]{2,6})\s*$/.exec(text);
+    if (!m || !BYLINE_DEGREES.includes(m[1].replace(/\./g, '').toLowerCase())) break;
+    text = text.slice(0, m.index).trim();
+  }
   text = text.replace(/[*\u2020\u2021]+/g, '');
   text = text.replace(/\s*\([^)]*\)/g, '');
   const people = [];

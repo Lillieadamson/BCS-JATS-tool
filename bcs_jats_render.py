@@ -15,6 +15,9 @@ from bcs_editor import (
     _split_at, analyze_ref, editor_html_to_jats, esc, esc_attr, html_to_tokens,
     title_plain, title_tokens, tokens_plain, tokens_to_jats,
 )
+from bcs_bibliography import (analyze_bib_entry, build_bib_mixed_citation,
+                              build_bib_element_citation,
+                              confidence as bib_confidence)
 from bcs_profiles import (
     ARCHIVAL, DEFAULT_PROFILE, LENS, PROFILES, TOOL_VERSION, get_profile,
 )
@@ -430,6 +433,17 @@ def render_ref_lists(project, warnings, profile=None):
             # a <mixed-citation> they would end up wrapped around
             # <string-name>, which the DTD does not allow. Drop the spans and
             # keep their text.
+            if project.get("bibliography"):
+                # The Bibliography of British Columbia reads its own way:
+                # authors from the small caps, kind of work from the list's
+                # head. See bcs_bibliography.py.
+                a = analyze_bib_entry(r["html"], group.get("title", ""))
+                refs_xml.append(f'<ref id="{esc_attr(rid)}">'
+                                f"{build_bib_element_citation(a)}"
+                                f"{build_bib_mixed_citation(a)}</ref>")
+                ref_rows.append({"id": rid, "text": " ".join(a["plain"].split())[:90],
+                                 "confidence": bib_confidence(a)})
+                continue
             html_str = _SPAN_PRESENTATION_RE.sub(r"\1", r["html"])
             mixed_xml, a = build_mixed_citation(html_str, prev_author)
             prev_author = a["resolved_author_text"]
@@ -455,7 +469,10 @@ def render_ref_lists(project, warnings, profile=None):
     if not groups_xml:
         return "", ref_rows
     if project.get("bibliography") and len(groups_xml) >= 1:
-        return ('<ref-list id="bibliography"><title>Bibliography</title>'
+        # One list per section of the Bibliography, inside one untitled
+        # wrapper: the article's own title already says "Bibliography of
+        # British Columbia". content-type is what the galley styles by.
+        return ('<ref-list id="bibliography" content-type="bibliography-of-bc">'
                 + "".join(groups_xml) + "</ref-list>"), ref_rows
     return "".join(groups_xml), ref_rows
 
@@ -1091,8 +1108,11 @@ def render_project(project, profile=None):
     # Bios go INSIDE each <contrib> as <bio>: that's where the eLife/Lens
     # viewer shows them (under the author's name in the Info tab), and it's
     # the semantically correct JATS placement for aggregators too.
-    from bcs_names import split_byline as split_authors
+    from bcs_names import split_byline as split_authors, byline_parts
     byline = " ".join((meta.get("authors") or "").split())
+    # "Prepared by David Gill, MLIS": the Bibliography's compiler. The role
+    # and the degree are printed, but they are not part of the name.
+    byline_role, _names, byline_degrees = byline_parts(byline)
     people = split_authors(byline) if byline else []
     bio_boxes = _bio_boxes(meta)
     # the Metadata tab's per-contributor boxes, when a draft has them, are the
@@ -1136,10 +1156,16 @@ def render_project(project, profile=None):
         # JATS puts contrib-id before name; OJS and Crossref both read it
         orcid_xml = (f'<contrib-id contrib-id-type="orcid">https://orcid.org/{esc(orcids[i])}</contrib-id>'
                      if orcids[i] else "")
+        # still contrib-type="author": the How to Cite box, the citation
+        # metadata and the copyright line all look for authors
+        degrees_xml = (f"<degrees>{esc(', '.join(byline_degrees))}</degrees>"
+                       if byline_degrees and i == len(people) - 1 else "")
+        role_xml = (f'<role content-type="compiler">{esc(byline_role)}</role>'
+                    if byline_role else "")
         contribs.append(
             f'<contrib contrib-type="author">{orcid_xml}<name><surname>{esc(surname)}</surname>'
             + (f"<given-names>{esc(given)}</given-names>" if given else "")
-            + f"</name>{aff_xml}{bio_xml}</contrib>")
+            + f"</name>{degrees_xml}{role_xml}{aff_xml}{bio_xml}</contrib>")
     contrib_group_xml = f"<contrib-group>{''.join(contribs)}</contrib-group>" if contribs else ""
 
     # --- back matter first (refs referenced from body) -----------------------
@@ -1170,6 +1196,8 @@ def render_project(project, profile=None):
     if notes_sec_xml:
         body_parts.append(notes_sec_xml)
     body_xml = "<body>" + "".join(body_parts) + "</body>" if body_parts else "<body><p/></body>"
+    if not body_parts and project.get("bibliography"):
+        body_xml = ""      # the Bibliography is all entries; <body> is optional
 
     # --- author notes (byline as printed + any unmatched bios) ----------------
     notes_paras = []
@@ -1415,7 +1443,9 @@ def _filename_type(meta):
 
 def _filename_author(meta):
     """Last name of the first author, e.g. 'Chapman' from 'Kit Chapman'."""
-    authors = (meta.get("authors") or "").strip()
+    from bcs_names import byline_parts
+    # "Prepared by David Gill, MLIS" -> "David Gill"
+    authors = byline_parts((meta.get("authors") or "").strip())[1]
     # first author only (authors are separated by " and ")
     first = re.split(r"\s+and\s+", authors, maxsplit=1, flags=re.I)[0].strip()
     if "," in first:            # "Last, First" style

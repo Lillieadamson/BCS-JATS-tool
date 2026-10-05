@@ -1778,7 +1778,14 @@ def save_project(project):
 
 
 def load_project(pid):
-    return json.loads(_path(pid).read_text(encoding="utf-8"))
+    project = json.loads(_path(pid).read_text(encoding="utf-8"))
+    # A Bibliography of British Columbia imported before the tool knew its
+    # sections: sort its entries back under their heads (in memory; the
+    # editor saves it the next time the draft is saved).
+    if project.get("bibliography"):
+        from bcs_bibliography import regroup_old_draft
+        regroup_old_draft(project)
+    return project
 
 
 def media_dir(pid):

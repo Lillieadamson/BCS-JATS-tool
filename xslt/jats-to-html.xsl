@@ -488,7 +488,18 @@ or pipeline) parameterized.
                 </a>
               </li>
             </xsl:if>
-            <xsl:if test="$reflist">
+            <!-- the Bibliography of British Columbia: one link per section -->
+            <xsl:for-each select="$reflist[@content-type = 'bibliography-of-bc']/ref-list[ref]">
+              <xsl:variable name="sec-id">
+                <xsl:apply-templates select="." mode="id"/>
+              </xsl:variable>
+              <li>
+                <a href="#{$sec-id}" class="nav-link">
+                  <xsl:value-of select="normalize-space(string(title))"/>
+                </a>
+              </li>
+            </xsl:for-each>
+            <xsl:if test="$reflist[not(@content-type = 'bibliography-of-bc')]">
               <xsl:variable name="ref-id">
                 <xsl:apply-templates select="$reflist" mode="id"/>
               </xsl:variable>
@@ -2759,9 +2770,15 @@ or pipeline) parameterized.
                 <xsl:if test="$is-review and position() = 1">
                   <span class="byline-role">Reviewed by </span>
                 </xsl:if>
+                <!-- the Bibliography of British Columbia: "Prepared by David
+                     Gill, MLIS" -->
+                <xsl:if test="role[@content-type = 'compiler'] and position() = 1">
+                  <span class="byline-role"><xsl:value-of select="normalize-space(role[@content-type = 'compiler'])"/><xsl:text> </xsl:text></span>
+                </xsl:if>
                 <span class="author-name">
                   <xsl:call-template name="contrib-identify"/>
                 </span>
+<!-- (the degree, "MLIS", is printed by contrib-identify) -->
                 <xsl:apply-templates select="contrib-id[@contrib-id-type='orcid']" mode="orcid-link"/>
               </span>
             </xsl:otherwise>
@@ -4634,6 +4651,36 @@ or pipeline) parameterized.
     </xsl:call-template>
   </xsl:template>
   
+
+  <!-- The Bibliography of British Columbia: one list per section ("Books
+       and Chapters in Books", "Journal Articles", ...), each under its own
+       head, with no "References" head over them: the article title
+       already says what this is. -->
+  <xsl:template match="back/ref-list[@content-type = 'bibliography-of-bc']" priority="2">
+    <div class="back-section bibliography-of-bc">
+      <xsl:call-template name="named-anchor"/>
+      <xsl:for-each select="ref-list[ref]">
+        <div class="section ref-list bib-section">
+          <xsl:call-template name="named-anchor"/>
+          <xsl:call-template name="main-title">
+            <xsl:with-param name="contents">
+              <xsl:apply-templates select="title/node()"/>
+            </xsl:with-param>
+          </xsl:call-template>
+          <ul class="ref-list-items">
+            <xsl:apply-templates select="ref"/>
+          </ul>
+        </div>
+      </xsl:for-each>
+    </div>
+  </xsl:template>
+
+  <!-- In the Bibliography the authors are set in small caps, as in print.
+       Only the names before the title: editors ("edited by ...") stay in
+       roman. -->
+  <xsl:template priority="2" match="ref-list[@content-type = 'bibliography-of-bc']//mixed-citation/string-name[not(preceding-sibling::article-title | preceding-sibling::chapter-title | preceding-sibling::source)]">
+    <span class="sc ref-author"><xsl:apply-templates/></span>
+  </xsl:template>
 
   <xsl:template match="back/ref-list">
     <xsl:call-template name="backmatter-section">

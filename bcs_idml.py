@@ -39,12 +39,28 @@ class IdmlPackage:
         self.master_first_page = {}   # master spread id -> lowest page using it
         self.master_stories = set()   # stories that live on a master page
         self.hyperlinks = {}       # HyperlinkTextSource id -> URL
+        self.page_spread = {}      # page label -> spread id
         self._char_styles = {}     # decoded name -> {"italic":bool,"bold":bool,"sup":bool}
         self._load_styles()
         self._load_hyperlinks()
         self._load_spreads()
         self._load_masters()
         self._load_stories()
+
+    def page_is_blank(self, page, text_only=False):
+        """No text frame on the page and no picture on its spread. Kept
+        cautious: a spread with any image counts as not blank, because a
+        frame's page is only a guess from its x position.
+
+        text_only=True asks only "is there any text on this page?" -- right
+        for the Bibliography, which has no figures, so a page with nothing
+        but a picture on it is an advertisement (issue 230, page 144)."""
+        name = str(page)
+        if name not in self.page_spread:
+            return False
+        if any(f["page"] == name for f in self.frames.values()):
+            return False
+        return text_only or not self.images.get(self.page_spread[name])
 
     # -- zip helpers ---------------------------------------------------------
 
@@ -142,6 +158,8 @@ class IdmlPackage:
             sid = spread.get("Self")
             self.spread_order.append(sid)
             pages = [p.get("Name", "") for p in spread.findall("Page")]
+            for name in pages:
+                self.page_spread[name] = sid
             for pg in spread.findall("Page"):
                 master = pg.get("AppliedMaster") or ""
                 name = pg.get("Name", "")
@@ -397,6 +415,24 @@ def merge_special_runs(xml):
     return xml
 
 
+_EXT_PAIR_RE = re.compile(
+    r'(<ext-link ext-link-type="uri" xlink:href="([^"]*)">)((?:(?!</ext-link>).)*)'
+    r'</ext-link>(\s*)<ext-link ext-link-type="uri" xlink:href="\2">', re.S)
+
+
+def merge_ext_links(xml):
+    """InDesign often makes one link out of several hyperlink sources -- the
+    URL text plus the space before it, or a URL broken across two runs. Each
+    source came out as its own <ext-link>, so the galley showed the same
+    address as two links side by side. Join neighbours that point at the
+    same address."""
+    prev = None
+    while prev != xml:
+        prev = xml
+        xml = _EXT_PAIR_RE.sub(lambda m: m.group(1) + m.group(3) + m.group(4), xml)
+    return xml
+
+
 class InlineBuilder:
     """Accumulates runs and emits JATS inline markup, merging adjacent runs
     that share formatting so the output isn't a confetti of one-character
@@ -517,7 +553,7 @@ class StoryReader:
     # -- paragraph bookkeeping ----------------------------------------------
 
     def _close(self):
-        raw = merge_special_runs(self._cur.value())
+        raw = merge_ext_links(merge_special_runs(self._cur.value()))
         page, before = _split_page_number(raw)
         html_out = raw.replace(_MARK, "")
         if html_out.strip() or self._cur_table or self._cur_notes:
@@ -564,7 +600,7 @@ class StoryReader:
                 # nothing outside the page.
                 text = _ACE_RE.sub(_MARK, child.text or "")
                 text = text.replace("\u2028", " ")
-                if link:
+                if link and text.strip():
                     self._cur.raw(
                         f'<ext-link ext-link-type="uri" xlink:href="{_esc(link)}">'
                         f"{_esc(text)}</ext-link>")
@@ -1029,6 +1065,7 @@ class IssueParser:
         elif kind == "byline":
             piece.byline = re.sub(r"[\*†‡]+\d*\s*$", "", plain).strip()
 
+
         elif kind in ("book-author", "book-info", "book-title-following"):
             if kind == "book-title-following":
                 piece.review_books.append(plain)
@@ -1042,6 +1079,15 @@ class IssueParser:
 
         elif kind == "reviewer-affiliation":
             piece.reviewer_affiliation = plain
+
+        elif kind in ("heading", "heading2", "heading3") \
+                and _is_bib_piece(piece, p.style):
+            # The Bibliography of British Columbia: every head ("Books and
+            # Chapters in Books", "Journal Articles", ...) opens one list of
+            # entries. It is not a section of running text. (Issue 230 sets
+            # three of its five heads in the Article sub-head style, so the
+            # style alone cannot be trusted to say this.)
+            piece._bib_next_title = bib_heading_title(plain)
 
         elif kind in ("heading", "heading2", "heading3"):
             level = {"heading": 1, "heading2": 2, "heading3": 3}[kind]
@@ -1060,7 +1106,11 @@ class IssueParser:
                      "bibliography": "Bibliography"}[kind]
             if kind == "bibliography":
                 piece.bibliography = True
-            if not piece.ref_groups:
+            bib_title = getattr(piece, "_bib_next_title", "")
+            if bib_title:
+                piece.ref_groups.append({"title": bib_title, "html": []})
+                piece._bib_next_title = ""
+            elif not piece.ref_groups:
                 pending = getattr(piece, "_pending_ref_title", "")
                 piece.ref_groups.append({"title": pending or title, "html": []})
                 piece._pending_ref_title = ""
@@ -1223,7 +1273,13 @@ class IssueParser:
                 piece.fpage = str(story_pages[0])
             nxt = next((q.toc_page for q in kept[i + 1:] if q.toc_page), None)
             if piece.toc_page and nxt and nxt > piece.toc_page:
-                piece.lpage = str(nxt - 1)
+                last = nxt - 1
+                # a blank page before the next piece (issue 230 leaves 144
+                # empty after the Bibliography) is not part of this one
+                while last > piece.toc_page and self.pkg.page_is_blank(
+                        last, text_only=piece.bibliography):
+                    last -= 1
+                piece.lpage = str(last)
             elif story_pages:
                 piece.lpage = str(story_pages[-1])
             elif piece.fpage:
@@ -1240,6 +1296,19 @@ class IssueParser:
                     "article -- InDesign frames have no anchor. In the Body "
                     "tab, \"Place at first mention\" moves each one after the "
                     "paragraph that first cites it; drag or \"Move to\" the rest.")
+
+        for piece in kept:
+            if piece.bibliography and piece.byline:
+                # "prepared by David Gill, mlis" (small caps in print) ->
+                # "Prepared by David Gill, MLIS"
+                from bcs_names import byline_parts
+                role, names, degrees = byline_parts(piece.byline)
+                piece.byline = ((role + " " if role else "") + names
+                                + "".join(", " + d for d in degrees))
+            if piece.bibliography and _key(piece.title) == _key(
+                    "Bibliography of British Columbia"):
+                piece.warnings = [w for w in piece.warnings
+                                  if not w.startswith("Title was set in capitals")]
 
         if kept:
             kept[0].warnings.extend(self.warnings)
@@ -1345,6 +1414,35 @@ def _close_enough(a, b):
     if len(a) < 8 or len(b) < 8:
         return False
     return SequenceMatcher(None, a, b).ratio() >= 0.66
+
+
+def _is_bib_piece(piece, style=""):
+    """Is this the Bibliography of British Columbia?"""
+    return bool(piece.bibliography
+                or (style or "").startswith("Bibliography:")
+                or "bibliograph" in (piece.section or "").lower()
+                or _key(piece.title).startswith("bibliographyof"))
+
+
+_BIB_SMALL = {"a", "an", "and", "as", "at", "but", "by", "for", "from", "in",
+              "nor", "of", "on", "or", "the", "to", "with"}
+
+
+def bib_heading_title(text):
+    """A Bibliography head as a list title. The heads print in capitals, and
+    what is typed under them is inconsistent ("Audiovisual materials",
+    "Grey Literature"), so give them all the same title case."""
+    text = " ".join(_detitle(text).split()).strip(" :.")
+    words = text.split()
+    out = []
+    for i, w in enumerate(words):
+        if 0 < i and w.lower() in _BIB_SMALL:
+            out.append(w.lower())
+        elif w[:1].islower():
+            out.append(w[:1].upper() + w[1:])
+        else:
+            out.append(w)
+    return " ".join(out)
 
 
 def _piece_has_content(piece):

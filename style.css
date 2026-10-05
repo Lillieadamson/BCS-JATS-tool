@@ -1178,3 +1178,17 @@ a.audio-playlist-download { font-size: 0.85em; font-weight: 400; white-space: no
     div.media.audio.panel audio, div.media.audio.panel p.media-download,
     a.audio-playlist-download { display: none; }
 }
+
+
+/* ---- Bibliography of British Columbia -------------------------------------
+   One list per section, entries with a hanging indent as in print, authors
+   in small caps (the galley adds span.ref-author round the names). */
+.bibliography-of-bc .bib-section + .bib-section { margin-top: 2rem; }
+.bibliography-of-bc .ref-list-items { list-style: none; padding-left: 0; }
+.bibliography-of-bc .ref-entry {
+  padding-left: 1.5em;
+  text-indent: -1.5em;
+  margin-bottom: 0.6em;
+}
+.ref-author { font-variant: small-caps; }
+.author-degrees { font-variant: small-caps; }
