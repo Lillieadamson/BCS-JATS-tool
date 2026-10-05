@@ -2,7 +2,7 @@
 """
 bcs_bibliography.py -- the Bibliography of British Columbia.
 
-Every issue of BC Studies closes with David Gill's Bibliography of British
+Every issue of BC Studies closes with Bibliography of British
 Columbia: a list of new books, chapters, articles and theses, sorted into
 sections under a head ("Books and Chapters in Books", "Journal Articles",
 "Theses, Dissertations, and Graduate Projects", "Audiovisual Materials",
