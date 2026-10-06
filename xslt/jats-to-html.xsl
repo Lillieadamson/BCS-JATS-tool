@@ -6095,7 +6095,7 @@ or pipeline) parameterized.
                  "application/x-bibtex");
       }]
     ];
-    buttons.push(["Text", "The " + noun + " as printed, as a plain text file", function () {
+    buttons.push(["Download", "The " + noun + " as printed, as a plain text file", function () {
       saveFile(toText(chosen()), fileBase + "-" + noun + suffix() + ".txt", "text/plain");
     }]);
     buttons.forEach(function (b) {

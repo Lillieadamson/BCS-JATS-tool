@@ -901,7 +901,7 @@ def _license_xml(meta, year, warnings):
             return ""
         return (f'<license license-type="open-access" '
                 f'xlink:href="{esc_attr(LICENSE["url"])}">'
-                f'<license-p>{esc(LICENSE.get("text") or "")}</license-p></license>')
+                f'<license-p>{_italic_journal(esc(LICENSE.get("text") or ""))}</license-p></license>')
 
     # The copyright agreement always gets its <license>, and so always gets
     # the "Rights and permissions" button. With no address set, the button
@@ -910,7 +910,12 @@ def _license_xml(meta, year, warnings):
     url = (COPYRIGHT_AGREEMENT.get("url") or "").strip()
     href = f' xlink:href="{esc_attr(url)}"' if url else ""
     return (f'<license license-type="copyright"{href}>'
-            f'<license-p>{esc(COPYRIGHT_AGREEMENT.get("text") or "")}</license-p></license>')
+            f'<license-p>{_italic_journal(esc(COPYRIGHT_AGREEMENT.get("text") or ""))}</license-p></license>')
+
+
+def _italic_journal(text):
+    """The journal's name set in italics wherever the licence text names it."""
+    return text.replace("BC Studies", "<italic>BC Studies</italic>")
 
 
 def _int_year(year):
