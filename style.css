@@ -1192,3 +1192,43 @@ a.audio-playlist-download { font-size: 0.85em; font-weight: 400; white-space: no
 }
 .ref-author { font-variant: small-caps; }
 .author-degrees { font-variant: small-caps; }
+
+
+/* ---- Export references ----------------------------------------------------
+   The bar the galley script puts over each reference list (RIS, BibTeX,
+   text, copy). Built by script so a reader without it sees nothing. */
+.ref-export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 1.25em;
+  padding: 8px 10px;
+  border: 1px solid var(--bcs-rule);
+  border-radius: 4px;
+  background-color: #f8fafc;
+  font-family: var(--bcs-sans);
+  font-size: 0.8rem;
+}
+.ref-export-label {
+  margin-right: 4px;
+  font-weight: 600;
+  color: var(--bcs-ink);
+}
+.ref-export-pick {
+  max-width: min(100%, 16em);
+  padding: 4px 6px;
+  border: 1px solid var(--bcs-rule);
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: var(--bcs-ink);
+  font-family: var(--bcs-sans);
+  font-size: 0.75rem;
+}
+.ref-export-pick:focus-visible {
+  outline: 3px solid var(--bcs-blue-mid);
+  outline-offset: 2px;
+}
+@media print {
+  .ref-export { display: none; }
+}

@@ -2540,7 +2540,12 @@ or pipeline) parameterized.
       <p class="section-tag section-tag-{translate($subject,
           'ABCDEFGHIJKLMNOPQRSTUVWXYZ ,&amp;',
           'abcdefghijklmnopqrstuvwxyz-')}">
-        <xsl:value-of select="$subject"/>
+        <xsl:choose>
+          <!-- the JATS subject stays the full section name; the label on
+               the page is just "Bibliography" -->
+          <xsl:when test="$subject = 'BIBLIOGRAPHY OF BRITISH COLUMBIA'">BIBLIOGRAPHY</xsl:when>
+          <xsl:otherwise><xsl:value-of select="$subject"/></xsl:otherwise>
+        </xsl:choose>
       </p>
     </xsl:if>
   </xsl:template>
@@ -3968,6 +3973,7 @@ or pipeline) parameterized.
       <xsl:variable name="firstXref" select="(//xref[@ref-type='bibr' and @rid=$id])[1]"/>
       
       <li id="{$id}" class="ref-entry">
+        <xsl:call-template name="ref-export-data"/>
         <!-- Output the reference contents (authors, title, year, source, etc.) -->
         <xsl:apply-templates/>
         
@@ -3977,6 +3983,126 @@ or pipeline) parameterized.
         </xsl:if>
       </li>
     </xsl:template>
+  <!-- The parts of a reference as data-* attributes on its <li>, for the
+       "Export references" bar the galley script builds (RIS, BibTeX, plain
+       text). Read from the element-citation, the structured copy that is
+       otherwise not shown; a reference with only a mixed-citation falls
+       back to that. Several people go in one attribute separated by "|".
+       Context: ref. -->
+  <xsl:template name="ref-export-data">
+    <xsl:variable name="c"
+      select="(.//element-citation | .//mixed-citation[not(ancestor::ref[1]//element-citation)])[1]"/>
+    <xsl:if test="$c">
+      <xsl:attribute name="data-type">
+        <xsl:value-of select="$c/@publication-type"/>
+      </xsl:attribute>
+      <xsl:variable name="authors"
+        select="$c/person-group[not(@person-group-type) or @person-group-type = 'author']/*[self::name or self::string-name or self::collab]
+                | $c/name | $c/string-name | $c/collab"/>
+      <xsl:if test="$authors">
+        <xsl:attribute name="data-authors">
+          <xsl:for-each select="$authors">
+            <xsl:if test="position() &gt; 1">|</xsl:if>
+            <xsl:call-template name="ref-export-name"/>
+          </xsl:for-each>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:variable name="editors"
+        select="$c/person-group[@person-group-type = 'editor']/*[self::name or self::string-name or self::collab]"/>
+      <xsl:if test="$editors">
+        <xsl:attribute name="data-editors">
+          <xsl:for-each select="$editors">
+            <xsl:if test="position() &gt; 1">|</xsl:if>
+            <xsl:call-template name="ref-export-name"/>
+          </xsl:for-each>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'title'"/>
+        <xsl:with-param name="node" select="($c/article-title | $c/chapter-title)[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'source'"/>
+        <xsl:with-param name="node" select="$c/source[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'series'"/>
+        <xsl:with-param name="node" select="$c/series[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'year'"/>
+        <xsl:with-param name="node" select="$c/year[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'volume'"/>
+        <xsl:with-param name="node" select="$c/volume[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'issue'"/>
+        <xsl:with-param name="node" select="$c/issue[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'fpage'"/>
+        <xsl:with-param name="node" select="($c/fpage | $c/elocation-id)[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'lpage'"/>
+        <xsl:with-param name="node" select="$c/lpage[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'publisher'"/>
+        <xsl:with-param name="node" select="$c/publisher-name[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'place'"/>
+        <xsl:with-param name="node" select="$c/publisher-loc[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'isbn'"/>
+        <xsl:with-param name="node" select="$c/isbn[1]"/>
+      </xsl:call-template>
+      <xsl:call-template name="ref-export-attr">
+        <xsl:with-param name="name" select="'doi'"/>
+        <xsl:with-param name="node" select="$c/pub-id[@pub-id-type = 'doi'][1]"/>
+      </xsl:call-template>
+      <xsl:variable name="url"
+        select="($c/ext-link/@xlink:href | $c/uri/@xlink:href | $c/uri[not(@xlink:href)])[1]"/>
+      <xsl:if test="normalize-space($url)">
+        <xsl:attribute name="data-url">
+          <xsl:value-of select="normalize-space($url)"/>
+        </xsl:attribute>
+      </xsl:if>
+    </xsl:if>
+  </xsl:template>
+
+  <!-- one data-* attribute, only when the element is there and not empty -->
+  <xsl:template name="ref-export-attr">
+    <xsl:param name="name"/>
+    <xsl:param name="node"/>
+    <xsl:if test="normalize-space(string($node))">
+      <xsl:attribute name="data-{$name}">
+        <xsl:value-of select="normalize-space(string($node))"/>
+      </xsl:attribute>
+    </xsl:if>
+  </xsl:template>
+
+  <!-- "Surname, Given" (or the collab's name). Context: name, string-name
+       or collab. -->
+  <xsl:template name="ref-export-name">
+    <xsl:choose>
+      <xsl:when test="surname">
+        <xsl:value-of select="normalize-space(string(surname))"/>
+        <xsl:if test="normalize-space(string(given-names))">
+          <xsl:text>, </xsl:text>
+          <xsl:value-of select="normalize-space(string(given-names))"/>
+        </xsl:if>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="normalize-space(string(.))"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
     <!-- ================================================================= -->
   <!-- FOOTNOTE BIDIRECTIONAL LINKING                                    -->
   <!-- ================================================================= -->
@@ -5753,6 +5879,279 @@ or pipeline) parameterized.
         host.appendChild(a);
       });
     }
+  }
+
+  /* Export references  */
+  function refText(li) {
+    var box = li.querySelector(".mixed-citation, .citation, .element-citation") || li;
+    var clone = box.cloneNode(true);
+    Array.prototype.forEach.call(clone.querySelectorAll("a.xref"), function (a) {
+      if (a.textContent.trim() === "↩") { a.parentNode.removeChild(a); }
+    });
+    return clone.textContent.replace(/\s+/g, " ").replace(/\s*↩\s*$/, "").trim();
+  }
+  function refPeople(li, attr) {
+    var v = li.getAttribute(attr);
+    return v ? v.split("|").filter(function (s) { return s.trim(); }) : [];
+  }
+  function refData(li) {
+    var d = {};
+    ["type", "title", "source", "series", "year", "volume", "issue", "fpage",
+     "lpage", "publisher", "place", "isbn", "doi", "url"].forEach(function (k) {
+      d[k] = li.getAttribute("data-" + k) || "";
+    });
+    d.authors = refPeople(li, "data-authors");
+    d.editors = refPeople(li, "data-editors");
+    d.text = refText(li);
+    return d;
+  }
+
+  var RIS_TYPES = { journal: "JOUR", book: "BOOK", chapter: "CHAP",
+    thesis: "THES", webpage: "ELEC", web: "ELEC", website: "ELEC",
+    newspaper: "NEWS", magazine: "MGZN", report: "RPRT", confproc: "CPAPER",
+    conference: "CPAPER", film: "MPCT", video: "VIDEO", map: "MAP",
+    archive: "UNPB", manuscript: "UNPB" };
+
+  function toRIS(refs) {
+    return refs.map(function (d) {
+      var lines = [];
+      function add(tag, v) { if (v) { lines.push(tag + "  - " + v); } }
+      var structured = d.type || d.title || d.source || d.authors.length;
+      add("TY", RIS_TYPES[d.type] || "GEN");
+      d.authors.forEach(function (a) { add("AU", a); });
+      d.editors.forEach(function (a) { add("ED", a); });
+      if (d.title) {
+        add("TI", d.title);
+        add("T2", d.source);
+      } else {
+        add("TI", d.source || (structured ? "" : d.text));
+      }
+      add("T3", d.series);
+      add("PY", d.year);
+      add("VL", d.volume);
+      add("IS", d.issue);
+      add("SP", d.fpage);
+      add("EP", d.lpage);
+      add("PB", d.publisher);
+      add("CY", d.place);
+      add("SN", d.isbn);
+      add("DO", d.doi);
+      add("UR", d.url || (d.doi ? "https://doi.org/" + d.doi : ""));
+      if (!structured) { add("N1", d.text); }
+      lines.push("ER  - ");
+      return lines.join("\r\n");
+    }).join("\r\n\r\n") + "\r\n";
+  }
+
+  var BIB_TYPES = { journal: "article", newspaper: "article", magazine: "article",
+    book: "book", chapter: "incollection", thesis: "phdthesis",
+    report: "techreport", confproc: "inproceedings", conference: "inproceedings" };
+
+  function bibEsc(s) {
+    return String(s).replace(/([&%$#_])/g, "\\$1");
+  }
+  function toBibTeX(refs) {
+    var used = {};
+    return refs.map(function (d) {
+      var first = (d.authors[0] || d.editors[0] || d.title || d.source || "ref").split(",")[0];
+      var base = (first.normalize ? first.normalize("NFD") : first)
+        .replace(/[^A-Za-z0-9]/g, "").toLowerCase() || "ref";
+      base += (d.year.match(/\d{4}/) || [""])[0];
+      var key = base, n = 0;
+      while (used[key]) { n += 1; key = base + String.fromCharCode(96 + n); }
+      used[key] = true;
+      var type = BIB_TYPES[d.type] || "misc";
+      var f = [];
+      function add(name, v, braces) {
+        if (v) { f.push("  " + name + " = {" + (braces ? "{" + bibEsc(v) + "}" : bibEsc(v)) + "}"); }
+      }
+      /* an organization (no comma) is braced so BibTeX keeps it whole */
+      function people(list) {
+        return list.map(function (p) {
+          return p.indexOf(",") < 0 && p.indexOf(" ") > 0 ? "{" + p + "}" : p;
+        }).join(" and ");
+      }
+      add("author", people(d.authors));
+      add("editor", people(d.editors));
+      if (d.title) {
+        add("title", d.title, true);
+        add(type === "article" ? "journal" : "booktitle", d.source, true);
+      } else {
+        add("title", d.source, true);
+      }
+      add("series", d.series);
+      add("year", d.year);
+      add("volume", d.volume);
+      add("number", d.issue);
+      add("pages", d.fpage && d.lpage ? d.fpage + "--" + d.lpage : d.fpage);
+      add(type === "phdthesis" ? "school" : "publisher", d.publisher);
+      add("address", d.place);
+      add("isbn", d.isbn);
+      if (d.doi) { f.push("  doi = {" + d.doi + "}"); }
+      if (d.url) { f.push("  url = {" + d.url + "}"); }
+      if (!d.title && !d.source) { add("note", d.text); }
+      return "@" + type + "{" + key + ",\n" + f.join(",\n") + "\n}";
+    }).join("\n\n") + "\n";
+  }
+
+  function toText(groups) {
+    return groups.map(function (g) {
+      var body = g.refs.map(function (d) { return d.text; }).join("\n\n");
+      return g.title ? g.title + "\n\n" + body : body;
+    }).join("\n\n\n") + "\n";
+  }
+
+  function saveFile(text, name, type) {
+    var blob = new Blob([text], { type: type + ";charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    window.setTimeout(function () {
+      URL.revokeObjectURL(a.href);
+      document.body.removeChild(a);
+    }, 1000);
+  }
+
+  var fileBase = (document.title || "references")
+    .split(/\s[|–—-]\s/)[0]
+    .replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60)
+    .toLowerCase() || "references";
+
+  function headText(section) {
+    var h = section.querySelector("h1, h2, h3, h4, h5, h6, .main-title");
+    return h ? h.textContent.replace(/\s+/g, " ").trim() : "";
+  }
+
+  /* A note as text: "1. Harold A. Innis, ...", without the return arrow. */
+  function noteText(el) {
+    var clone = el.cloneNode(true);
+    Array.prototype.forEach.call(clone.querySelectorAll("a.fn-return, a.xref"), function (a) {
+      if (a.textContent.trim() === "\u21A9") { a.parentNode.removeChild(a); }
+    });
+    return clone.textContent.replace(/\s+/g, " ").replace(/\s*\u21A9\s*$/, "").trim()
+      .replace(/^(\d+)\.?\s+/, "$1. ");
+  }
+  function noteData(el) { return { text: noteText(el) }; }
+
+  /* kind "refs" offers RIS, BibTeX, text and copy; kind "notes" only text
+     and copy, since a note is prose (often several sources and comment)
+     with no fields a reference manager could fill in. */
+  function buildExportBar(host, before, sections, kind) {
+    var notes = (kind === "notes");
+    var noun = notes ? "notes" : "references";
+    var bar = document.createElement("div");
+    bar.className = "ref-export";
+    bar.setAttribute("role", "group");
+    bar.setAttribute("aria-label", "Export " + noun);
+
+    var label = document.createElement("span");
+    label.className = "ref-export-label";
+    label.textContent = "Export " + noun;
+    bar.appendChild(label);
+
+    var pick = null;
+    if (sections.length > 1) {
+      pick = document.createElement("select");
+      pick.className = "ref-export-pick";
+      pick.setAttribute("aria-label", "Which section to export");
+      var all = document.createElement("option");
+      all.value = "";
+      all.textContent = "All sections";
+      pick.appendChild(all);
+      sections.forEach(function (s, i) {
+        var o = document.createElement("option");
+        o.value = String(i);
+        o.textContent = s.title || ("Section " + (i + 1));
+        pick.appendChild(o);
+      });
+      bar.appendChild(pick);
+    }
+
+    function chosen() {
+      var list = (pick && pick.value !== "") ? [sections[+pick.value]] : sections;
+      return list.map(function (s) {
+        return { title: sections.length > 1 ? s.title : "",
+                 refs: s.items.map(notes ? noteData : refData) };
+      });
+    }
+    function flat() {
+      return chosen().reduce(function (acc, g) { return acc.concat(g.refs); }, []);
+    }
+    function suffix() {
+      if (!pick || pick.value === "") { return ""; }
+      var t = sections[+pick.value].title || ("section-" + (+pick.value + 1));
+      return "-" + t.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase();
+    }
+
+    var buttons = notes ? [] : [
+      ["RIS", "For Zotero, EndNote, Mendeley and most reference managers", function () {
+        saveFile(toRIS(flat()), fileBase + "-references" + suffix() + ".ris",
+                 "application/x-research-info-systems");
+      }],
+      ["BibTeX", "For LaTeX, JabRef and BibDesk", function () {
+        saveFile(toBibTeX(flat()), fileBase + "-references" + suffix() + ".bib",
+                 "application/x-bibtex");
+      }]
+    ];
+    buttons.push(["Text", "The " + noun + " as printed, as a plain text file", function () {
+      saveFile(toText(chosen()), fileBase + "-" + noun + suffix() + ".txt", "text/plain");
+    }]);
+    buttons.forEach(function (b) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "share-btn";
+      btn.textContent = b[0];
+      btn.title = b[1];
+      btn.addEventListener("click", b[2]);
+      bar.appendChild(btn);
+    });
+    var copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "share-btn";
+    copy.textContent = "Copy";
+    copy.title = "Copy the " + noun + " as printed";
+    copy.addEventListener("click", function () {
+      copyText(toText(chosen()), copy, "Copy");
+    });
+    bar.appendChild(copy);
+
+    host.insertBefore(bar, before);
+  }
+
+  if (window.Blob && window.URL && URL.createObjectURL) {
+    /* the Bibliography of British Columbia: one bar for all its sections */
+    Array.prototype.forEach.call(document.querySelectorAll(".bibliography-of-bc"), function (bib) {
+      var sections = Array.prototype.slice.call(bib.querySelectorAll(".bib-section"))
+        .map(function (s) {
+          return { title: headText(s), items: Array.prototype.slice.call(s.querySelectorAll("li.ref-entry")) };
+        })
+        .filter(function (s) { return s.items.length; });
+      var first = bib.querySelector(".bib-section");
+      if (sections.length && first) { buildExportBar(first.parentNode, first, sections); }
+    });
+    /* every other reference list: the outermost one, items and all */
+    Array.prototype.forEach.call(document.querySelectorAll(".ref-list"), function (list) {
+      if (list.closest(".bibliography-of-bc")) { return; }
+      if (list.parentNode.closest && list.parentNode.closest(".ref-list")) { return; }
+      var items = Array.prototype.slice.call(list.querySelectorAll("li.ref-entry"));
+      var firstList = list.querySelector("ul.ref-list-items");
+      if (!items.length || !firstList) { return; }
+      buildExportBar(firstList.parentNode, firstList, [{ title: "", items: items }]);
+    });
+    /* notes: endnote paragraphs (Lens) or footnote blocks (archival), one
+       bar per run of them; notes under a table belong to the table */
+    var noteGroups = [];
+    Array.prototype.forEach.call(document.querySelectorAll("p.endnote, div.footnote"), function (n) {
+      if (n.closest(".table-wrap, .table-wrap-foot")) { return; }
+      var g = noteGroups.filter(function (x) { return x.parent === n.parentNode; })[0];
+      if (!g) { g = { parent: n.parentNode, items: [] }; noteGroups.push(g); }
+      g.items.push(n);
+    });
+    noteGroups.forEach(function (g) {
+      buildExportBar(g.parent, g.items[0], [{ title: "", items: g.items }], "notes");
+    });
   }
 
   /* ---- Only one panel open at a time -------------------------------
