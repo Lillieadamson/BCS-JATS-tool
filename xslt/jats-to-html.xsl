@@ -111,7 +111,9 @@ or pipeline) parameterized.
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:xlink="http://www.w3.org/1999/xlink"
   xmlns:mml="http://www.w3.org/1998/Math/MathML"
-  exclude-result-prefixes="xlink mml">
+  xmlns:exsl="http://exslt.org/common"
+  extension-element-prefixes="exsl"
+  exclude-result-prefixes="xlink mml exsl">
 
 
   <!--<xsl:output method="xml" indent="no" encoding="UTF-8"
@@ -4124,8 +4126,88 @@ or pipeline) parameterized.
           </xsl:otherwise>
         </xsl:choose>
       </a>
+      <xsl:call-template name="fn-preview"/>
     </span>
   </xsl:template>
+
+  <!-- 1a. Footnote preview: a copy of the note's text, tucked inside the
+       callout and shown by style.css when the reader hovers over the note
+       number or tabs to it. No JavaScript. The copy is aria-hidden because
+       the number already links to the real note, so a screen reader would
+       otherwise read the note twice. Notes' own callouts (a note that
+       cites another note) get no preview, which also stops a loop.
+       Context: xref[@ref-type='fn']. -->
+  <xsl:template name="fn-preview">
+    <xsl:variable name="note" select="key('element-by-id',@rid)[1]"/>
+    <xsl:if test="$note and not(ancestor::fn or ancestor::p[@content-type='endnote'])">
+      <xsl:variable name="rendered">
+        <xsl:choose>
+          <!-- archival profile: <fn><label/><p/>...</fn> -->
+          <xsl:when test="$note/self::fn">
+            <xsl:apply-templates select="$note/p"/>
+          </xsl:when>
+          <!-- lens profile: <p content-type="endnote"> in the Notes sec -->
+          <xsl:otherwise>
+            <xsl:apply-templates select="$note"/>
+          </xsl:otherwise>
+        </xsl:choose>
+      </xsl:variable>
+      <span class="fn-preview" aria-hidden="true">
+        <xsl:apply-templates select="exsl:node-set($rendered)/node()"
+          mode="fn-preview-copy"/>
+      </span>
+    </xsl:if>
+  </xsl:template>
+
+  <!-- Copy the rendered note into the preview, made safe to sit inside a
+       sentence: no ids (they would duplicate the real note's), no return
+       arrow, and every block element (p, div, ul...) turned into a span so
+       the browser does not close the paragraph the callout sits in.
+       Links stay clickable for mouse and touch readers, but get
+       tabindex="-1": the card is aria-hidden, and a hidden card must not
+       take keyboard focus. Keyboard and screen-reader users reach the same
+       links in the full note, one click away. -->
+  <xsl:template match="*" mode="fn-preview-copy">
+    <xsl:variable name="inline"
+      select="contains(' i em b strong span sup sub small code abbr cite q br bdi bdo dfn kbd mark s u var wbr ',
+                       concat(' ', local-name(), ' '))"/>
+    <xsl:choose>
+      <xsl:when test="contains(concat(' ', @class, ' '), ' fn-return ')"/>
+      <xsl:when test="local-name()='a' and @href">
+        <a>
+          <xsl:copy-of select="@*[not(name()='id' or name()='name' or name()='tabindex')]"/>
+          <xsl:attribute name="tabindex">-1</xsl:attribute>
+          <xsl:apply-templates mode="fn-preview-copy"/>
+        </a>
+      </xsl:when>
+      <xsl:when test="$inline">
+        <xsl:element name="{local-name()}">
+          <xsl:copy-of select="@*[not(name()='id' or name()='name')]"/>
+          <xsl:apply-templates mode="fn-preview-copy"/>
+        </xsl:element>
+      </xsl:when>
+      <xsl:otherwise>
+        <span>
+          <xsl:copy-of select="@class | @lang | @dir"/>
+          <xsl:if test="local-name()='p' or local-name()='div' or local-name()='li'">
+            <xsl:attribute name="class">
+              <xsl:text>fn-preview-para</xsl:text>
+              <xsl:if test="@class">
+                <xsl:value-of select="concat(' ', @class)"/>
+              </xsl:if>
+            </xsl:attribute>
+          </xsl:if>
+          <xsl:apply-templates mode="fn-preview-copy"/>
+        </span>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="text()" mode="fn-preview-copy">
+    <xsl:copy/>
+  </xsl:template>
+
+  <xsl:template match="comment() | processing-instruction()" mode="fn-preview-copy"/>
 
   <!-- 2. The return arrow itself, shared by both profiles -->
   <xsl:template name="fn-return-link">
